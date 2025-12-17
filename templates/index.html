@@ -60,19 +60,17 @@
                 </div>
             </form>
 
-            <!-- Status Section -->
-            <div class="status-section" id="statusSection" style="display: none;">
-                <div class="status-indicator" id="statusIndicator"></div>
-                <p class="status-message" id="statusMessage"></p>
-            </div>
+           
 
             <!-- Flask Message Display (if using flash messages) -->
-            {% if message %}
-            <div class="status-section">
-                <div class="status-indicator status-{{ status_type if status_type else 'neutral' }}"></div>
-                <p class="status-message">{{ message }}</p>
-            </div>
-            {% endif %}
+ <div class="status-section">
+    <div class="status-indicator {{ status_type if status_type else 'neutral' }}"></div>
+    <p class="status-message">
+        {{ message if message else "No action performed yet." }}
+    </p>
+</div>
+
+
         </main>
 
         <!-- Info Cards -->
@@ -109,6 +107,6 @@
         </footer>
     </div>
 
-    <script src="/static/app.js"></script>
+   <!-- <script src="/static/app.js"></script> -->
 </body>
 </html>

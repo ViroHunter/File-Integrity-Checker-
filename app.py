@@ -4,73 +4,79 @@ import os
 
 app = Flask(__name__)
 
-HASH_STORAGE_FILE = 'file_hashes.txt'
+HASH_FILE = "file_hashes.txt"
+
 
 def calculate_file_hash(file):
-    sha256_hash = hashlib.sha256()
-    for byte_block in iter(lambda: file.read(4096), b""):
-        sha256_hash.update(byte_block)
+    sha256 = hashlib.sha256()
     file.seek(0)
-    return sha256_hash.hexdigest()
+    while True:
+        data = file.read(4096)
+        if not data:
+            break
+        sha256.update(data)
+    file.seek(0)
+    return sha256.hexdigest()
 
-def store_hash(filename, file_hash):
-    with open(HASH_STORAGE_FILE, 'a') as f:
-        f.write(f"{filename}:{file_hash}\n")
 
-def get_stored_hash(filename):
-    if not os.path.exists(HASH_STORAGE_FILE):
-        return None
-
-    with open(HASH_STORAGE_FILE, 'r') as f:
-        for line in f:
-            stored_filename, stored_hash = line.strip().split(':', 1)
-            if stored_filename == filename:
-                return stored_hash
-    return None
-
-@app.route('/', methods=['GET', 'POST'])
+@app.route("/", methods=["GET", "POST"])
 def index():
-    if request.method == 'POST':
-        if 'file' not in request.files:
-            return render_template('index.html',
-                                 message="No file uploaded. Please select a file.",
-                                 status_type="error")
+    message = None
+    status_type = "neutral"
 
-        file = request.files['file']
+    if request.method == "POST":
+        file = request.files.get("file")
+        action = request.form.get("action")
 
-        if file.filename == '':
-            return render_template('index.html',
-                                 message="No file selected. Please choose a file to upload.",
-                                 status_type="error")
+        if not file or file.filename == "":
+            message = "No file selected."
+            status_type = "warning"
 
-        action = request.form.get('action')
-        filename = file.filename
-        file_hash = calculate_file_hash(file)
+        else:
+            file_hash = calculate_file_hash(file)
 
-        if action == 'store':
-            store_hash(filename, file_hash)
-            return render_template('index.html',
-                                 message=f"Hash stored successfully for '{filename}'. SHA-256: {file_hash[:16]}...",
-                                 status_type="success")
+            if action == "store":
+                with open(HASH_FILE, "a") as f:
+                    f.write(f"{file.filename}:{file_hash}\n")
 
-        elif action == 'check':
-            stored_hash = get_stored_hash(filename)
+                message = "Hash stored successfully."
+                status_type = "success"
 
-            if stored_hash is None:
-                return render_template('index.html',
-                                     message=f"No stored hash found for '{filename}'. Please store the hash first.",
-                                     status_type="warning")
+            elif action == "check":
+                stored_hash = None
 
-            if stored_hash == file_hash:
-                return render_template('index.html',
-                                     message=f"File integrity verified! '{filename}' has not been modified.",
-                                     status_type="success")
+                if os.path.exists(HASH_FILE):
+                    with open(HASH_FILE, "r") as f:
+                        for line in f:
+                            name, hash_val = line.strip().split(":")
+                            if name == file.filename:
+                                stored_hash = hash_val
+                                break
+
+                if stored_hash is None:
+                    message = "No stored hash found for this file."
+                    status_type = "warning"
+                elif stored_hash == file_hash:
+                    message = "File integrity verified."
+                    status_type = "success"
+                else:
+                    message = "Integrity check failed."
+                    status_type = "error"
             else:
-                return render_template('index.html',
-                                     message=f"Warning: File integrity check failed! '{filename}' has been modified or corrupted.",
-                                     status_type="error")
+                message = "Invalid action."
+                status_type = "error"
 
-    return render_template('index.html')
+        # DEBUG CONFIRMATION (you can remove later)
+        print("ACTION:", action)
+        print("MESSAGE:", message)
+        print("STATUS:", status_type)
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    return render_template(
+        "index.html",
+        message=message,
+        status_type=status_type
+    )
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
