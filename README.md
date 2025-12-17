@@ -1,4 +1,19 @@
-# File Integrity Checker - Frontend
+# File Integrity Checker
+
+  *Company* : CODTECH IT SOLUTIONS 
+  
+  *Name* : Mohammed Bilal Shamsi 
+
+  *Intern ID* : CTIS0354
+
+  *Domain* : Cyber Security and Ethical Hacking 
+
+  *Duration* : 4 weeks 
+
+  *Mentor* : Neela Santosh Kumar
+  
+
+# Frontend :
 
 A modern, professional cybersecurity web application for hash-based file integrity verification.
 
